@@ -18,7 +18,7 @@ public:
     explicit SubWidget(QString s1, QString s2, QWidget *parent = nullptr);
     ~SubWidget();
     void Deleteojpairs(QString path, QString pairs1, QString pairs2);
-
+    void recommendnext(QString path, int flag);
 private slots:
     void on_btn6_clicked();
 
@@ -32,6 +32,8 @@ private:
     Ui::SubWidget *ui;
     QFile equal;
     QFile inequal;
+    //int judged[10000] = {0};
+    //int index = 0;
 };
 
 #endif // SUBWIDGET_H

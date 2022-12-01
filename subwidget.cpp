@@ -41,7 +41,9 @@ void SubWidget::on_btn4_clicked() // equal
     QString path = name1 + "," + name2; // current oj pair
     QString path_0 = name2 + "," + name1;
     QFile equalfile("/home/njucs/Eqminer1/output/equal.csv");
-    int flag = 0;
+    QString nextline;
+    int flag = 0, extra = 0;
+    int i = 0;
     if (equalfile.open(QIODevice::ReadWrite | QIODevice::Text))
     {
         QString line;
@@ -52,9 +54,16 @@ void SubWidget::on_btn4_clicked() // equal
             if (QString::compare(path, line) == 0 || QString::compare(path_0, line) == 0){
                 qDebug() << "already exist in equal.csv" << endl;
                 flag = 1;
-                break;
             }
             line=in.readLine();//循环读取下行
+            i++;
+            if (flag == 1){
+                if (!line.isNull())
+                    nextline = line;
+                else
+                    extra = 1; //no more next lines
+                break;
+            }
         }
     }else{
         qDebug() << "fail to open result file" << endl;
@@ -69,6 +78,10 @@ void SubWidget::on_btn4_clicked() // equal
        QString inequalpath = "/home/njucs/Eqminer1/output/inequal.csv";
        Deleteojpairs(inequalpath, path, path_0);
     }
+    else{
+        recommendnext(nextline, extra);
+    }
+
 }
 
 void SubWidget::on_btn7_clicked()
@@ -86,7 +99,8 @@ void SubWidget::Deleteojpairs(QString path, QString pairs1, QString pairs2)
 {
     QFile temp(path);
     QString content[100];
-    int i = 0;
+    int i = 0, flag = 0;
+    QString nextline;
     if (temp.open(QIODevice::ReadWrite | QIODevice::Text))
     {
         QString line;
@@ -96,6 +110,7 @@ void SubWidget::Deleteojpairs(QString path, QString pairs1, QString pairs2)
         {
             if (QString::compare(pairs1, line) == 0 || QString::compare(pairs2, line) == 0){
                 qDebug() << "delete this wrong record in csv" << endl;
+                flag = i;
             }
             else{
                 content[i++] = line;
@@ -114,6 +129,12 @@ void SubWidget::Deleteojpairs(QString path, QString pairs1, QString pairs2)
         temp.close();
     }
     temp.close();
+    if (i == flag)//dose not have any lines
+        recommendnext("nextline", 1);
+    else{
+        nextline = content[flag+1];
+        recommendnext(nextline, 0);
+    }
 }
 
 void SubWidget::on_btn5_clicked() //inequal
@@ -125,7 +146,9 @@ void SubWidget::on_btn5_clicked() //inequal
     QString path = name1 + "," + name2; // current oj pair
     QString path_0 = name2 + "," + name1;
     QFile inequalfile("/home/njucs/Eqminer1/output/inequal.csv");
-    int flag = 0;
+    QString nextline;
+    int flag = 0, extra = 0;
+    int i = 0;
     if (inequalfile.open(QIODevice::ReadWrite | QIODevice::Text))
     {
         QString line;
@@ -134,14 +157,20 @@ void SubWidget::on_btn5_clicked() //inequal
         while(!line.isNull())//字符串有内容
         {
             if (QString::compare(path, line) == 0 || QString::compare(path_0, line) == 0){
-                qDebug() << "already exist in inequal.csv" << endl;
+                qDebug() << "already exist in equal.csv" << endl;
                 flag = 1;
-                break;
             }
             line=in.readLine();//循环读取下行
+            i++;
+            if (flag == 1){
+                if (!line.isNull())
+                    nextline = line;
+                else
+                    extra = 1; //no more next lines
+                break;
+            }
         }
-    }
-    else{
+    }else{
         qDebug() << "fail to open result file" << endl;
     }
     inequalfile.close();
@@ -151,7 +180,43 @@ void SubWidget::on_btn5_clicked() //inequal
            txtOutput << path << endl;
            qDebug() << "successfully modify the result" << endl;
        }
-       QString inequalpath = "/home/njucs/Eqminer1/output/equal.csv";
-       Deleteojpairs(inequalpath, path, path_0);
+       QString equalpath = "/home/njucs/Eqminer1/output/equal.csv";
+       Deleteojpairs(equalpath, path, path_0);
     }
+    else{
+        recommendnext(nextline, extra);
+    }
+}
+
+void SubWidget::recommendnext(QString path, int flag){
+    if (flag == 1){
+        QString contents = "no more oj pairs need to be judged, please go back and add new ones if you require";
+        ui->path1->setText("");
+        ui->path2->setText("");
+        ui->oj1->setPlainText(contents);
+        ui->oj2->setPlainText(contents);
+        return;
+    }
+    QString title = "/home/njucs/Eqminer1/";
+    QStringList list = path.split(",");
+    QString name1 = title + list[0];
+    QString name2 = title + list[1];
+    qDebug() << name1 << endl;
+    qDebug() << name2 << endl;
+
+    QFile file1(name1);
+    QFile file2(name2);
+
+    if (!file1.open(QIODevice::ReadOnly) || !file2.open(QIODevice::ReadOnly))
+    {
+        qDebug() <<"failed to open the file"<<endl;
+        return;
+    }
+    ui->oj1->setPlainText(file1.readAll());
+    ui->oj2->setPlainText(file2.readAll());
+    ui->path1->setText(name1);
+    ui->path2->setText(name2);
+    file1.close();
+    file2.close();
+
 }
